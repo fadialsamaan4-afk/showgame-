@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survey Showdown — Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&family=Cairo:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b1640; --bg2:#1d3aa8; --gold:#ffc83d; --gold2:#ff9f1a;
+    --tile:#1747d6; --tile2:#0d2c94; --red:#ff3b3b; --green:#2fd37a; --ink:#fff; --muted:#b9c6ff;
+    --a:#ff5a7a; --b:#34d1ff; --panel:rgba(5,14,50,.65); --line:#2c48c0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  html{background:#0b1640}
+  body.solo .tvtools{right:auto;left:12px}
+  body{font-family:Inter,Cairo,system-ui,sans-serif;color:var(--ink);
+    background:radial-gradient(ellipse at top,var(--bg2),var(--bg1) 70%) fixed;min-height:100vh}
+  h1,h2{font-family:Anton,Impact,sans-serif;letter-spacing:1px;font-weight:400}
+  button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 16px;font-weight:800;color:#fff;background:#24399e}
+  button:disabled{opacity:.4;cursor:default}
+  input,select,textarea{font:inherit;border-radius:10px;border:2px solid #3953c4;background:#0d1b55;color:#fff;padding:10px 12px;width:100%}
+  .hidden{display:none!important}
+  .gold{background:linear-gradient(var(--gold),var(--gold2));color:#2a1700;box-shadow:0 4px 0 #a85f00}
+  .red{background:var(--red);box-shadow:0 4px 0 #9b1111}
+  .ca{background:var(--a);color:#2b0010} .cb{background:var(--b);color:#001a26}
+  .card{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px;font-weight:600}
+  .hint{color:var(--muted);font-size:13px}
+  .ar{font-family:Cairo,sans-serif;font-weight:800;display:block;direction:rtl}
+  .en{font-family:Inter,sans-serif;font-weight:700;display:block;opacity:.93}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:5px 10px;border-radius:99px;background:#0d1b55;border:1px solid #3953c4}
+  .dot{width:9px;height:9px;border-radius:50%;background:#777}
+  .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+  /* ---------- role picker ---------- */
+  #pick{max-width:720px;margin:0 auto;padding:30px 18px;text-align:center}
+  .logo{font-size:clamp(46px,10vw,96px);margin:10px 0 0;color:var(--gold);
+    text-shadow:0 5px 0 #a85f00,0 10px 30px rgba(0,0,0,.5);transform:rotate(-2deg)}
+  .roles{display:grid;gap:14px;margin-top:26px}
+  .roles button{padding:20px;font-size:20px;text-align:left;display:flex;gap:16px;align-items:center}
+  .roles button small{display:block;font-weight:600;font-size:14px;opacity:.85;margin-top:3px}
+  .roles .ic{font-size:40px}
+
+  /* ---------- TV display ---------- */
+  #tv{padding:2vw 3vw;min-height:100vh;display:flex;flex-direction:column}
+  .tvtop{display:grid;grid-template-columns:1fr auto 1fr;gap:2vw;align-items:stretch}
+  .team{border-radius:1.4vw;padding:1vw 1.4vw;text-align:center;border:.3vw solid transparent;background:var(--panel);transition:.25s}
+  .team .nm{font-weight:800;font-size:clamp(18px,2.2vw,40px)}
+  .team .sc{font-family:Anton;font-size:clamp(36px,4.6vw,90px);line-height:1.05}
+  .team.l .nm{color:var(--a)} .team.r .nm{color:var(--b)}
+  .team.on.l{border-color:var(--a);box-shadow:0 0 2.4vw rgba(255,90,122,.55)}
+  .team.on.r{border-color:var(--b);box-shadow:0 0 2.4vw rgba(52,209,255,.55)}
+  .team .tag{font-size:clamp(12px,1.2vw,22px);font-weight:800;letter-spacing:2px;color:var(--gold);min-height:1.4em}
+  .xs{display:flex;gap:.8vw;justify-content:center;margin-top:.4vw}
+  .xs span{font-family:Anton;font-size:clamp(22px,3vw,58px);line-height:1;color:rgba(255,255,255,.12);
+    border:.2vw solid rgba(255,255,255,.12);border-radius:.6vw;width:1.6em;text-align:center}
+  .xs span.hit{color:var(--red);border-color:var(--red);text-shadow:0 0 1vw rgba(255,59,59,.8)}
+  .bankbox{text-align:center;display:flex;flex-direction:column;justify-content:center}
+  .bankbox .lbl{font-size:clamp(11px,1vw,18px);color:var(--muted);font-weight:700;letter-spacing:3px}
+  .bankbox .val{font-family:Anton;font-size:clamp(40px,5vw,100px);color:var(--gold);background:#071033;border:.3vw solid var(--gold);
+    border-radius:1.2vw;padding:0 2vw;min-width:12vw;line-height:1.2}
+  .rinfo{text-align:center;color:var(--muted);font-weight:700;margin:1.4vw 0 .3vw;font-size:clamp(13px,1.3vw,24px);letter-spacing:2px}
+  .tvq{text-align:center;line-height:1.35;margin:.3vw 0 1.4vw}
+  .tvq .ar{font-size:clamp(24px,3.2vw,62px)} .tvq .en{font-size:clamp(22px,2.9vw,56px)}
+  .board{background:linear-gradient(#a85f00,#ffc83d,#a85f00);padding:1vw;border-radius:2vw;
+    display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;gap:1vw}
+  .tile{perspective:1000px;height:clamp(64px,8.2vw,150px)}
+  .tile .in{position:relative;width:100%;height:100%;transition:transform .7s;transform-style:preserve-3d}
+  .tile.open .in{transform:rotateX(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:1vw;display:flex;align-items:center;border:.2vw solid #6c8cff}
+  .front{background:linear-gradient(var(--tile),var(--tile2));justify-content:center}
+  .front .num{font-family:Anton;font-size:clamp(24px,3vw,56px);background:#071a6a;border:.2vw solid #6c8cff;border-radius:50%;
+    width:1.8em;height:1.8em;display:flex;align-items:center;justify-content:center}
+  .back{background:linear-gradient(#2f62ff,#1640c9);transform:rotateX(180deg);gap:1vw;padding:0 1.4vw}
+  .back .ans{flex:1;text-align:center;line-height:1.25}
+  .back .ar{font-size:clamp(16px,2.1vw,40px)} .back .en{font-size:clamp(14px,1.9vw,36px);text-transform:uppercase}
+  .back .pts{font-family:Anton;font-size:clamp(24px,3vw,56px);background:#071a6a;padding:0 .8vw;border-radius:.8vw}
+  .tile.empty .front{background:#0a1c66} .tile.empty .num{display:none}
+  .tile.missed .back{background:linear-gradient(#5a6694,#3c4670)}
+  .banner{text-align:center;font-weight:800;color:var(--gold);font-size:clamp(16px,2vw,38px);min-height:1.6em;margin-top:1.2vw}
+  .wait{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+  .tvtools{position:fixed;bottom:12px;right:12px;display:flex;gap:8px;z-index:30;opacity:.55}
+  .tvtools:hover{opacity:1}
+  .tvtools button{padding:8px 12px;font-size:13px}
+  .bigx{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50;gap:4vw}
+  .bigx span{font-family:Anton;color:var(--red);font-size:38vmin;text-shadow:0 0 40px #000;animation:pop 1s ease forwards}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.1);opacity:1}75%{opacity:1}100%{transform:scale(1);opacity:0}}
+  .final{position:fixed;inset:0;background:rgba(0,0,25,.86);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4vw}
+  .final h2{font-size:clamp(50px,9vw,170px);margin:0;color:var(--gold);text-shadow:0 6px 0 #a85f00}
+  .final .fs{display:flex;gap:6vw;margin-top:2vw;font-size:clamp(20px,3vw,56px);font-weight:800}
+  .final .fs b{display:block;font-family:Anton;font-size:clamp(50px,7vw,130px);font-weight:400}
+
+  /* ---------- Host controller ---------- */
+  #host{max-width:640px;margin:0 auto;padding:14px 14px 90px}
+  .hbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .hscore{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
+  .hscore .t{border-radius:12px;padding:8px;background:#0d1b55;border:2px solid transparent}
+  .hscore .t.on.l{border-color:var(--a)} .hscore .t.on.r{border-color:var(--b)}
+  .hscore .t .n{font-weight:800;font-size:14px} .hscore .l .n{color:var(--a)} .hscore .r .n{color:var(--b)}
+  .hscore .t .s{font-family:Anton;font-size:30px;line-height:1.1}
+  .hscore .t .x{color:var(--red);font-family:Anton;letter-spacing:3px;min-height:20px}
+  .hscore .bk{font-family:Anton;font-size:30px;color:var(--gold)}
+  .hq{font-size:19px;line-height:1.35;text-align:center}
+  .phase{display:inline-block;font-size:12px;font-weight:800;letter-spacing:2px;padding:4px 10px;border-radius:99px;background:var(--gold);color:#2a1700}
+  .alist{display:grid;gap:8px}
+  .abtn{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;background:linear-gradient(#2f62ff,#1640c9);border:2px solid #6c8cff}
+  .abtn .n{font-family:Anton;font-size:22px;background:#071a6a;border-radius:50%;width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center}
+  .abtn .tx{flex:1} .abtn .ar{font-size:17px} .abtn .en{font-size:14px}
+  .abtn .p{font-family:Anton;font-size:24px}
+  .abtn.done{background:#173a2a;border-color:var(--green);opacity:.75}
+  .abtn.done .n{background:var(--green);color:#002814}
+  .abtn.miss{background:#2c3358;border-color:#5a6694;opacity:.7}
+  .acts{display:grid;gap:10px}
+  .acts .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .big{font-size:19px;padding:16px}
+  .hmsg{text-align:center;font-weight:800;color:var(--gold);min-height:22px}
+  .foot{position:fixed;left:0;right:0;bottom:0;background:rgba(5,10,40,.95);border-top:2px solid var(--line);padding:10px 14px;z-index:20}
+  .foot .row{max-width:640px;margin:0 auto;justify-content:space-between}
+  .foot button{padding:10px 12px;font-size:14px}
+  .qlist{max-height:280px;overflow:auto}
+  .qitem{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:#0d1b55;margin-bottom:6px}
+  .qitem input{width:auto} .qitem .ar{font-size:15px} .qitem .en{font-size:14px}
+  .qitem .del{background:transparent;color:var(--muted);padding:4px 8px}
+  .menu{position:fixed;inset:0;background:rgba(0,0,20,.7);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+  .menu .card{width:100%;max-width:640px;margin:0;border-radius:18px 18px 0 0}
+
+  /* ---------- one-screen mode ---------- */
+  body.solo #tv{min-height:auto}
+  body.solo .wrapsolo{display:grid;grid-template-columns:2.2fr 1fr;gap:0;align-items:start}
+  body.solo #host{max-width:none;padding-bottom:20px;height:100vh;overflow:auto;border-left:2px solid var(--line)}
+  body.solo .foot{position:static;background:none;border:0;padding:10px 0}
+  @media (max-width:900px){ body.solo .wrapsolo{grid-template-columns:1fr} body.solo #host{height:auto} }
+  @media (max-width:700px){ .board{grid-template-columns:1fr;grid-auto-flow:row} }
+</style>
+</head>
+<body>
+
+<!-- ================= ROLE PICKER ================= -->
+<section id="pick">
+  <h1 class="logo">SURVEY SHOWDOWN</h1>
+  <p class="hint" id="pickHint" style="font-size:16px">Open this same page on two devices: one for the TV, one for your phone.</p>
+  <div class="roles">
+    <button class="gold" id="pickTv"><span class="ic">📺</span><span>Big screen (TV)<small>Shows the board, the questions, strikes and scores to everyone.</small></span></button>
+    <button class="ca" id="pickHost"><span class="ic">📱</span><span>Host controller (phone)<small>Only you see this: answers, reveal buttons and strikes.</small></span></button>
+    <button id="pickSolo"><span class="ic">💻</span><span>One screen only<small>Board and host controls side by side on one device, with no phone.</small></span></button>
+  </div>
+  <p class="hint" style="margin-top:18px"><span class="chip"><span class="dot" id="pickDot"></span><span id="pickConn">Connecting…</span></span></p>
+</section>
+
+<div class="wrapsolo">
+<!-- ================= TV ================= -->
+<section id="tv" class="hidden">
+  <div id="tvWait" class="wait">
+    <h1 class="logo">SURVEY SHOWDOWN</h1>
+    <p style="font-size:clamp(16px,1.8vw,30px);font-weight:700">Waiting for the host to start the game…</p>
+    <p class="hint" id="tvHow" style="font-size:clamp(13px,1.2vw,20px)">On your phone, open this same page and choose <b>Host controller</b>.</p>
+    <div id="tvLocal" class="hidden" style="background:#071033;border:3px solid var(--gold);border-radius:18px;padding:16px 26px">
+      <div class="hint" style="font-size:clamp(13px,1.2vw,22px);font-weight:700">On your phone (same Wi-Fi), open:</div>
+      <div id="tvLocalUrl" style="font-family:Anton,Inter,sans-serif;font-size:clamp(26px,3.6vw,70px);color:var(--gold);letter-spacing:1px;direction:ltr"></div>
+    </div>
+    <div id="tvNet" class="hidden" style="background:#071033;border:3px solid var(--gold);border-radius:18px;padding:16px 30px">
+      <div class="hint" style="font-size:clamp(13px,1.2vw,22px);font-weight:700">On your phone open <b id="tvNetUrl" dir="ltr" style="color:#fff"></b>, choose <b>Host controller</b> and type this code:</div>
+      <div id="tvCode" style="font-family:Anton,Inter,sans-serif;font-size:clamp(60px,9vw,170px);color:var(--gold);letter-spacing:.15em;direction:ltr;line-height:1.1"></div>
+    </div>
+    <span class="chip"><span class="dot" id="tvDot"></span><span id="tvConn">Connecting…</span></span>
+  </div>
+  <div id="tvGame" class="hidden">
+    <div class="tvtop">
+      <div class="team l" id="tvL"><div class="tag" id="tvLtag"></div><div class="nm" id="tvLn"></div><div class="sc" id="tvLs"></div><div class="xs" id="tvLx"></div></div>
+      <div class="bankbox"><div class="lbl">ROUND BANK</div><div class="val" id="tvBank">0</div></div>
+      <div class="team r" id="tvR"><div class="tag" id="tvRtag"></div><div class="nm" id="tvRn"></div><div class="sc" id="tvRs"></div><div class="xs" id="tvRx"></div></div>
+    </div>
+    <div class="rinfo" id="tvRound"></div>
+    <div class="tvq" id="tvQ"></div>
+    <div class="board" id="tvBoard"></div>
+    <div class="banner" id="tvMsg"></div>
+  </div>
+  <div class="tvtools" id="tvTools">
+    <button id="soundBtn">🔊 Enable sound</button>
+    <button id="fsBtn">⛶ Full screen</button>
+  </div>
+</section>
+
+<!-- ================= HOST ================= -->
+<section id="host" class="hidden">
+  <div class="hbar">
+    <b style="font-family:Anton;font-size:22px;letter-spacing:1px;color:var(--gold)">HOST 🔒</b>
+    <span class="chip"><span class="dot" id="hDot"></span><span id="hConn">Connecting…</span></span>
+  </div>
+
+  <!-- Setup -->
+  <div id="hSetup">
+    <div id="codeBox" class="card hidden">
+      <label style="margin-top:0">TV code (shown on the TV screen)</label>
+      <div class="row"><input id="codeIn" maxlength="4" autocomplete="off" autocapitalize="characters" style="font-family:Anton,Inter,sans-serif;font-size:30px;letter-spacing:.3em;text-transform:uppercase;text-align:center" class="grow" placeholder="ABCD"><button class="gold" id="codeBtn">Connect</button></div>
+      <div class="hint" id="codeMsg" style="margin-top:6px"></div>
+    </div>
+    <div id="resumeBox" class="card hidden">
+      <b>A game is in progress on this phone.</b>
+      <div class="row" style="margin-top:10px"><button class="gold grow" id="resumeBtn">Resume game</button><button id="discardBtn">Discard</button></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="grow"><label>Team on the LEFT</label><input id="nameL" value="Left Team"></div>
+        <div class="grow"><label>Team on the RIGHT</label><input id="nameR" value="Right Team"></div>
+      </div>
+      <div class="row">
+        <div class="grow"><label>Rounds</label><select id="roundCount"><option>3</option><option selected>5</option><option>7</option><option>10</option></select></div>
+        <div class="grow"><label>Question order</label><select id="order"><option value="shuffle">Shuffled</option><option value="list">As listed</option></select></div>
+      </div>
+      <label>Scores on the TV</label>
+      <select id="hideSel"><option value="show">Show scores during the game</option><option value="hide">Hide scores until the end</option></select>
+      <label>Point multipliers</label>
+      <select id="multSel"><option value="on">Double & triple the last two rounds</option><option value="off">Off</option></select>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0;font-size:24px">Question bank</h2><span class="hint" id="qcount"></span></div>
+      <div class="qlist" id="qlist" style="margin-top:8px"></div>
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-weight:800">+ Add your own question</summary>
+        <p class="hint">One answer per line as <b>Arabic | English | points</b>. Add extra wordings with commas: <b>قهوة، نسكافيه | coffee, nescafe | 40</b></p>
+        <input id="newQar" dir="rtl" placeholder="السؤال بالعربي" style="margin-bottom:8px">
+        <input id="newQen" placeholder="Question in English" style="margin-bottom:8px">
+        <textarea id="newA" rows="6" placeholder="قهوة، نسكافيه | coffee | 40&#10;شاي | tea | 28&#10;حليب | milk | 12"></textarea>
+        <div class="row" style="margin-top:8px"><button id="addQ">Add question</button><span class="hint" id="addMsg"></span></div>
+      </details>
+    </div>
+    <button class="gold big" id="startBtn" style="width:100%">START THE GAME ▶</button>
+  </div>
+
+  <!-- Round -->
+  <div id="hRound" class="hidden">
+    <div class="card" style="padding:12px">
+      <div class="hscore">
+        <div class="t l" id="hL"><div class="n" id="hLn"></div><div class="s" id="hLs"></div><div class="x" id="hLx"></div></div>
+        <div><div class="hint" style="font-size:11px;font-weight:800;letter-spacing:2px">BANK</div><div class="bk" id="hBank">0</div></div>
+        <div class="t r" id="hR"><div class="n" id="hRn"></div><div class="s" id="hRs"></div><div class="x" id="hRx"></div></div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <span class="hint" id="hRound2"></span><span class="phase" id="hPhase"></span>
+    </div>
+    <div class="card hq" id="hQ"></div>
+    <div class="hint" id="hAnsHint" style="margin-bottom:6px"></div>
+    <div class="alist" id="hAnswers"></div>
+    <div class="hmsg" id="hMsg" style="margin:12px 0"></div>
+    <div class="acts" id="hActs"></div>
+  </div>
+</section>
+</div>
+
+<div class="foot hidden" id="hFoot">
+  <div class="row">
+    <button id="undoBtn">↶ Undo</button>
+    <button id="hideBtn">Hide scores on TV</button>
+    <button id="moreBtn">☰ More</button>
+  </div>
+</div>
+
+<div class="menu hidden" id="menu">
+  <div class="card">
+    <h2 style="margin:0 0 10px;font-size:24px">Host menu</h2>
+    <div class="acts">
+      <div class="two"><button class="ca" id="mGiveL">Give bank → Left</button><button class="cb" id="mGiveR">Give bank → Right</button></div>
+      <div class="two"><button id="mPlusL">+10 Left</button><button id="mPlusR">+10 Right</button></div>
+      <button id="mClearX">Clear all strikes</button>
+      <button id="mSkip">Skip this question (new one)</button>
+      <button class="gold" id="mFinish">Finish game now & show winner</button>
+      <button class="red" id="mQuit">Quit to setup</button>
+      <button id="mClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="bigx" class="bigx hidden"></div>
+<div id="final" class="final hidden"><div class="hint" style="font-size:clamp(14px,1.6vw,30px);letter-spacing:4px;font-weight:800">FINAL SCORE</div><h2 id="fTitle"></h2><div class="fs" id="fScores"></div></div>
+
+<script>
+/* ================= QUESTION BANK (Arabic | English | points) ================= */
+const DEFAULT_QS = [
+  {ar:"اذكر شيئاً بيهمّك بالشب", en:"Name something that matters to you in a guy", a:[
+    ["المصاري","Money",26],["ريحته الحلوة","Smells good",18],["ابتسامته","His smile",14],["طوله","His height",12],
+    ["سيارته","His car",10],["لحيته","His beard",8],["بيعرف يطبخ","Can cook",7],["أمه ما بتتدخل","His mom doesn't interfere",5]]},
+  {ar:"اذكر كلمة بتسمعها بأي مسلسل بيئة شامية", en:"Name a word you hear in every old-Damascus series", a:[
+    ["ابن عمي","Ibn ammi (my cousin)",26],["تقبرني","To'borni (may you bury me)",20],["عيب","Shame!",14],["الله يرضى عليك","God bless you",12],
+    ["يا رجال","Ya rjal (oh men!)",10],["حاضر","Yes sir",8],["تكرم","At your service",6],["يا حيف","What a pity",4]]},
+  {ar:"اذكر شيئاً بتقوله الأم السورية وهي عم تتفرج مسلسل", en:"Name something a Syrian mom says while watching a series", a:[
+    ["الله لا يوفقها","May God not bless her",28],["حرام عليه","Shame on him",22],["ليش عم يعمل هيك؟","Why is he doing that?",15],
+    ["هالممثل كبر","This actor got old",11],["اسكتو بدي اسمع","Quiet, I want to hear",9],["شو لابسة هي؟","What is she wearing?",8],["هاد مو نفسه تبع المسلسل التاني؟","Isn't he from that other show?",5]]},
+  {ar:"اذكر حجة بتقولها المرأة لما ما بدها", en:"Name an excuse a wife gives when she's \"not in the mood\"", a:[
+    ["راسي عم يوجعني","I have a headache",46],["تعبانة","I'm tired",25],["الأولاد لسا صاحيين","The kids are still awake",13],
+    ["بكرا عندي دوام","I have work tomorrow",9],["لسا زعلانة منك","I'm still mad at you",5]]},
+  {ar:"اذكر مكان غريب ممكن ينمسك فيه عشّاق", en:"Name a weird place a couple might get caught", a:[
+    ["بالسيارة","In the car",36],["بالمطبخ","In the kitchen",17],["بالمصعد","In the elevator",13],["عالدرج","On the stairs",11],
+    ["ببيت أهله","At his parents' house",9],["بالحديقة","In the park",8],["بالسينما","In the cinema",5]]},
+  {ar:"اذكر كذبة بيقولها الزوج لما مرته تسأله \"أنا سمنت؟\"", en:"Name a lie a husband tells when his wife asks \"did I gain weight?\"", a:[
+    ["لا أبداً","Not at all",52],["بتجنني هيك","You look amazing like this",24],["أنا بحبك متل ما إنتِ","I love you as you are",14],["الطقم مو حلو","It's the outfit",8]]},
+  {ar:"اذكر شيئاً بيعترف فيه الشب بس لرفقاته", en:"Name something a guy only confesses to his friends", a:[
+    ["إنه بيخاف من مرته","He's scared of his wife",32],["إنه لسا بيحب الإكس","He still loves his ex",18],["إنه بيعيّط بالأفلام","He cries at movies",12],
+    ["إنه ما بيعرف يبوس","He can't kiss",10],["إنه بيستعمل كريمات مرته","He uses his wife's creams",9],["إنه بيطبخ لأمه","He cooks for his mom",7],
+    ["إنه بيخاف من العتمة","He's scared of the dark",6],["إنه بيشوف أفلام تركية","He watches Turkish soaps",5]]},
+  {ar:"اذكر شيئاً بيعمله الشب ليلفت نظر بنت عالانستغرام", en:"Name something a guy does to get a girl's attention on Instagram", a:[
+    ["يحط لايك على صورة قديمة","Likes an old photo",36],["يرد عالستوري","Replies to her story",28],["يحط صورة بالجيم","Posts a gym photo",17],
+    ["يعمل فولو وأنفولو","Follows and unfollows",11],["يحط صورة سيارة مو إلو","Posts a car that isn't his",6]]},
+  {ar:"اذكر سبباً بيخلي الزوجة \"زعلانة\" بدون ما تقول ليش", en:"Name a reason a wife is upset but won't say why", a:[
+    ["نسي مناسبة","He forgot an occasion",30],["طلع مع رفقاته","Went out with his friends",19],["حكى مع بنت","Talked to another girl",14],
+    ["ما مدح شكلها","Didn't compliment her look",12],["نسي يرد عالرسالة","Forgot to reply to her text",10],["دافع عن أمه","Took his mom's side",8],["حلمت فيه عم يخونها","She dreamed he cheated",5]]},
+  {ar:"اذكر شيئاً بتعمله البنت قبل ما تبعت سيلفي", en:"Name something a girl does before sending a selfie", a:[
+    ["فلتر","Puts on a filter",44],["تاخد ١٠٠ صورة","Takes 100 photos",29],["تنضّف الخلفية","Hides the mess behind her",15],["تزبط الإضاءة","Fixes the lighting",10]]},
+  {ar:"اذكر شيئاً بيعمله الزلمة لما مرته تقلّه \"لازم نحكي\"", en:"Name something a man does when his wife says \"we need to talk\"", a:[
+    ["يبلش يتذكر شو عمل","Starts thinking what he did wrong",30],["يعرق","Starts sweating",18],["يقول أنا تعبان","Says \"I'm tired\"",14],
+    ["يمسح الرسائل","Deletes messages",12],["يعمل حاله عم يحكي بالجوال","Fakes a phone call",9],["يتصل بأمه","Calls his mom",7],
+    ["يقول بحبك فجأة","Suddenly says \"I love you\"",6],["يطلع يشتري خبز","Goes out to buy bread",4]]},
+  {ar:"اذكر شيئاً بيقوله الشب لما بنت ترفضه", en:"Name something a guy says after a girl rejects him", a:[
+    ["أصلاً ما كنت مهتم","I wasn't even interested",38],["هي الخسرانة","Her loss",24],["كنت عم امزح","I was just joking",16],
+    ["ما شفتها منيح","I didn't see her properly",10],["أختي أحلى منها","My sister is prettier",7],["خلص بتجوز بنت خالتي","Fine, I'll marry my cousin",5]]},
+  {ar:"اذكر شيئاً تقوله الأم لما تتأخر برا البيت", en:"Name something mom says when you come home late", a:[
+    ["وين كنت لهلأ؟","Where were you?",30],["الأكل برد","The food got cold",19],["رح قول لأبوك","I'm telling your father",14],["ما رح تطلع بعد اليوم","You're not going out again",12],
+    ["كنت رح موت من القلق","I was worried sick",11],["شوف الساعة كم","Look what time it is",8],["روح عند يلي كنت عندهم","Go back to whoever you were with",6]]},
+  {ar:"اذكر حجة يقولها الطالب لما ما يعمل الوظيفة", en:"Name an excuse a student gives for not doing homework", a:[
+    ["نسيتها بالبيت","Left it at home",32],["الكهربا كانت مقطوعة","The power was out",22],["كنت مريض","I was sick",12],["ما فهمت المطلوب","Didn't understand it",9],
+    ["ما كان في وقت","No time",8],["أخي الصغير خربها","My little brother ruined it",7],["النت كان مقطوع","The internet was down",5],["القطة أكلتها","The cat ate it",4]]},
+  {ar:"اذكر شيئاً يعمله السوري أول ما ترجع الكهربا", en:"Name something people do the second the electricity comes back", a:[
+    ["يشحن الجوال","Charge the phone",44],["يشغل الغسالة","Run the washing machine",22],["يسخن المي","Heat water",15],
+    ["يصرخ إجت الكهربا","Shout \"the power's back!\"",12],["يشغل التلفزيون","Turn on the TV",7]]},
+  {ar:"اذكر شيئاً تلاقيه بشنتاية أي أم", en:"Name something you'd find in any mom's handbag", a:[
+    ["محارم","Tissues",29],["مفاتيح","Keys",17],["أدوية","Medicine",15],["علكة أو سكاكر","Gum or candy",13],
+    ["أوراق قديمة","Old receipts",11],["مراية صغيرة","A small mirror",8],["أكل للأولاد","Snacks for the kids",7]]},
+  {ar:"اذكر شيئاً بيعمله الزلمة لما المرأة تقلّه \"ما في شي\"", en:"Name something a husband does when his wife says \"nothing's wrong\"", a:[
+    ["يصدقها","Believes her",38],["يسأل مرة تانية","Asks again",30],["يجيب هدية","Brings a gift",17],["يهرب عالقهوة","Runs off to the café",11]]},
+  {ar:"اذكر شيئاً بيقوله الضيف لما تعطيه أكل وهو جوعان", en:"Name something a starving guest says when offered food", a:[
+    ["لا والله شبعان","No really, I'm full",42],["بس شوي","Just a little",22],["لا تتعذبو","Don't trouble yourselves",14],
+    ["أكلت قبل ما إجي","I ate before coming",10],["خلص بس هالصحن","Okay, just this plate",7],["كرمال خاطرك","Only for your sake",5]]},
+  {ar:"اذكر أسوأ وقت يرنّ فيه الجوال", en:"Name the worst moment for your phone to ring", a:[
+    ["بالصف أو المحاضرة","In class",32],["بالصلاة","During prayer",24],["وقت النوم","While sleeping",19],["بالاجتماع","In a meeting",14],["بالحمام","In the bathroom",11]]},
+  {ar:"اذكر شيئاً بيعمله التاجر المبتدئ لما يخسر صفقة", en:"Name something a beginner trader does after losing a trade", a:[
+    ["يفتح صفقة انتقام","Revenge trade",30],["يلوم السوق","Blames the market",20],["يحذف التطبيق","Deletes the app",13],["يكبّر اللوت","Doubles the lot size",11],
+    ["يتعلم استراتيجية جديدة من يوتيوب","Learns a new YouTube strategy",10],["يقول هالمرة الأخيرة","Says \"this is the last time\"",9],["يتصل بالمعلم","Calls his teacher",7]]},
+  {ar:"اذكر شيئاً يفعله الناس قبل النوم", en:"Name something people do before going to bed", a:[
+    ["تنظيف الأسنان,تفريش الأسنان","Brush teeth",38],["تصفح الجوال,الموبايل","Check phone",28],["القراءة,كتاب","Read",12],["شرب الماء,مي","Drink water",11],["الصلاة","Pray",9]]},
+  {ar:"اذكر سبباً يجعلك تتأخر عن العمل", en:"Name a reason you might be late for work", a:[
+    ["الزحمة,زحمة السير","Traffic",34],["النوم,غفيت","Overslept",24],["المواصلات,السرفيس","Transport",12],["ما لقيت شي إلبسه","Nothing to wear",8],
+    ["الأولاد","Kids",7],["الدوش","The shower",6],["الطقس,المطر","Weather",5],["عطل السيارة","Car trouble",4]]},
+  {ar:"اذكر شيئاً تجده في النادي الرياضي", en:"Name something you'd find in a gym", a:[
+    ["جهاز الجري,المشاية","Treadmill",30],["الأوزان,الحديد","Weights",28],["المرايا","Mirrors",12],
+    ["البنش","Bench",10],["المدرب","Trainer",8],["الخزائن","Lockers",6],["الماء","Water",4]]},
+  {ar:"اذكر فاكهة لونها أصفر", en:"Name a fruit that is yellow", a:[
+    ["الموز","Banana",56],["الليمون","Lemon",26],["الأناناس","Pineapple",9],["المانجا","Mango",7]]},
+  {ar:"اذكر أكلة تُقدَّم في العزائم", en:"Name a dish served at a big family dinner", a:[
+    ["الكبة","Kibbeh",22],["المقلوبة","Maqluba",19],["المنسف","Mansaf",16],["المحشي,ورق العنب","Stuffed grape leaves",12],
+    ["الأوزي","Ouzi",10],["الشاكرية","Shakriyeh",8],["الفتة","Fatteh",7],["الفريكة","Freekeh",5]]},
+  {ar:"اذكر شيئاً تأخذه معك إلى البحر", en:"Name something you take to the beach", a:[
+    ["المنشفة,البشكير","Towel",34],["واقي الشمس","Sunscreen",24],["الشمسية","Umbrella",14],["النظارة الشمسية","Sunglasses",10],
+    ["الأكل","Food",10],["الماء","Water",8]]},
+  {ar:"اذكر شيئاً يخاف منه الناس", en:"Name something people are afraid of", a:[
+    ["الأفاعي","Snakes",24],["المرتفعات","Heights",19],["الصراصير","Cockroaches",15],["الحماية","The mother-in-law",11],
+    ["العناكب","Spiders",10],["الظلام","The dark",8],["الإبر","Needles",7],["الموت","Death",5]]},
+  {ar:"اذكر شيئاً يضيّعه الناس دائماً", en:"Name something people lose all the time", a:[
+    ["المفاتيح","Keys",46],["الجوال","Phone",22],["المحفظة,الجزدان","Wallet",13],["النظارة","Glasses",10],["الريموت","Remote",8]]},
+  {ar:"اذكر شيئاً تراه في العرس", en:"Name something you see at a wedding", a:[
+    ["العروس","The bride",27],["الدبكة","Dabke",20],["الكيك","Cake",13],["الزفة","Zaffa",11],
+    ["الزلاغيط","Zaghareet (ululations)",10],["المحابس","Rings",9],["العريس","The groom",7]]},
+  {ar:"اذكر شيئاً يشربه الناس في الصباح", en:"Name something people drink in the morning", a:[
+    ["القهوة","Coffee",42],["الشاي","Tea",30],["الحليب","Milk",12],["المتة","Mate",10],["العصير","Juice",6]]},
+  {ar:"اذكر شيئاً ينساه الطلاب في البيت", en:"Name something students forget at home", a:[
+    ["الوظيفة,الواجب","Homework",36],["القلم","Pen",26],["الدفتر","Notebook",14],["الكتاب","Textbook",10],["الآلة الحاسبة","Calculator",7],["الشاحن","Charger",4]]},
+  {ar:"اذكر سبباً يجعلك تفتح جوالك", en:"Name a reason you pick up your phone", a:[
+    ["الساعة","Check the time",36],["الرسائل,الواتساب","Messages",32],["مواقع التواصل","Social media",20],["الأخبار","News",10]]},
+  {ar:"اذكر شيئاً يشتريه الناس للعيد", en:"Name something people buy for Eid", a:[
+    ["الملابس,التياب","New clothes",38],["الحلويات,المعمول","Sweets",26],["الألعاب","Toys",12],["الأحذية","Shoes",10],["الهدايا","Gifts",8],["الشوكولا","Chocolate",6]]},
+  {ar:"اذكر مهنة يلبس صاحبها زياً موحداً", en:"Name a job where people wear a uniform", a:[
+    ["الشرطي","Police officer",34],["الممرض,الطبيب","Nurse",22],["الإطفائي","Firefighter",17],["الجندي","Soldier",15],["الطيار","Pilot",9]]},
+];
+
+/* ================= helpers ================= */
+const $=id=>document.getElementById(id);
+const splitAlts=s=>(s||"").split(/[,،]/).map(x=>x.trim()).filter(Boolean);
+const first=s=>splitAlts(s)[0]||"";
+const keyOf=q=>q.ar+"|"+q.en;
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function bi(a,e){return (a?`<span class="ar" dir="rtl">${esc(a)}</span>`:"")+(e?`<span class="en">${esc(e)}</span>`:"");}
+function toLatin(s){return String(s).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+
+/* ================= sound ================= */
+let ac=null;
+function audio(){ try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==="suspended") ac.resume(); }catch(e){} updateSoundBtn(); }
+function tone(fs,dur=.18,type="square",vol=.08){
+  if(!ac||ac.state!=="running") return;
+  try{ let t=ac.currentTime; fs.forEach(f=>{const o=ac.createOscillator(),g=ac.createGain();
+    o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur);t+=dur*.8;}); }catch(e){}
+}
+const SFX={
+  ding:()=>tone([880,1320],.25,"triangle",.18),
+  flip:()=>tone([520],.15,"triangle",.08),
+  x:()=>tone([110,100],.55,"sawtooth",.15),
+  buzz:()=>tone([660,660],.12,"square",.1),
+  win:()=>tone([523,659,784,1046],.18,"triangle",.17),
+  final:()=>{tone([523,659,784,1046,784,1046],.2,"triangle",.18);},
+};
+function updateSoundBtn(){ const b=$("soundBtn"); if(b) b.classList.toggle("hidden", !!(ac&&ac.state==="running")); }
+
+/* ================= live room ================= */
+let room=null, role=null, peers=[], connected=false;
+async function initRoom(){
+  try{ if(window.claude&&window.claude.use) room=await window.claude.use("room"); }catch(e){ room=null; }
+  if(!room){ updateConn(); return; }
+  room.on("state",m=>{ if(role!=="tv"||m.sameTab) return; applyState(m.data); },()=>{});
+  room.onPeers(ch=>{
+    peers=ch.peers; updateConn();
+    if((role==="host"||role==="solo") && S && ch.joined.some(p=>!p.sameTab)) send();
+  },()=>{});
+  room.onConnection(c=>{ connected=c; updateConn(); if(c && (role==="host"||role==="solo") && S) send(); },()=>{});
+  if(role) room.presence({role}).catch(()=>{});
+}
+/* ----- local Wi-Fi mode (when the page is served by server.py on the laptop) ----- */
+let local=false, localPeers={}, lv=-1, localInfo=null;
+const myId=Math.random().toString(36).slice(2,10);
+async function initLocal(){
+  if(!/^https?:$/.test(location.protocol)) return false;
+  try{
+    const r=await fetch("/api/info",{cache:"no-store"}); if(!r.ok) return false;
+    const j=await r.json(); if(!j||j.app!=="survey-showdown") return false;
+    localInfo=j; local=true;
+  }catch(e){ return false; }
+  showLocalUrl(); pollLoop(); return true;
+}
+function showLocalUrl(){
+  if(!localInfo) return;
+  const ip=(localInfo.ips||[])[0];
+  const url=ip?`${ip}:${localInfo.port}/#host`:`(laptop IP):${localInfo.port}/#host`;
+  $("tvLocalUrl").textContent=url; $("tvLocal").classList.remove("hidden"); $("tvHow").classList.add("hidden");
+  $("pickHint").innerHTML=`Laptop = <b>Big screen</b>. Phone (same Wi-Fi) → open <b dir="ltr">${esc(url.replace("/#host",""))}</b> and choose <b>Host controller</b>.`;
+}
+async function pollLoop(){
+  for(;;){
+    try{
+      const r=await fetch(`/api/state?v=${lv}&role=${encodeURIComponent(role||"none")}&id=${myId}`,{cache:"no-store"});
+      const j=await r.json(); connected=true; localPeers=j.peers||{};
+      if(j.state && j.v!==lv){ lv=j.v; if(role==="tv") applyState(j.state); } else lv=j.v;
+    }catch(e){ connected=false; }
+    updateConn();
+    await new Promise(res=>setTimeout(res,400));
+  }
+}
+/* ----- internet mode: public MQTT relays over WebSocket (for a hosted copy of this page) ----- */
+const BROKERS = [
+  {name:"EMQX",     url:"wss://broker.emqx.io:8084/mqtt"},
+  {name:"HiveMQ",   url:"wss://broker.hivemq.com:8884/mqtt"},
+  {name:"Mosquitto",url:"wss://test.mosquitto.org:8081/"},
+];
+const TEST_BROKER = (location.search.match(/[?&]broker=([^&]+)/)||[])[1];
+let net=false, netCode="", netLinks=[], netSeen={}, netLastSeq=0, netEpoch="";
+const CODE_CHARS="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function u8(str){ return Array.from(new TextEncoder().encode(str)); }
+function mStr(str){ const b=u8(str); return [b.length>>8,b.length&255].concat(b); }
+function mLen(n){ const o=[]; do{ let d=n%128; n=Math.floor(n/128); if(n>0) d|=128; o.push(d); }while(n>0); return o; }
+function mPkt(h,body){ return new Uint8Array([h].concat(mLen(body.length),body)); }
+function MqttLink(broker,onMsg){
+  const L={broker,ok:false,ws:null,topics:[],buf:new Uint8Array(0),ping:null,dead:false};
+  function connect(){
+    if(L.dead) return;
+    let ws; try{ ws=new WebSocket(broker.url,"mqtt"); }catch(e){ return retry(); }
+    L.ws=ws; ws.binaryType="arraybuffer";
+    ws.onopen=()=>{ const id="ss"+Math.random().toString(36).slice(2,12);
+      ws.send(mPkt(0x10,[0,4,77,81,84,84,4,2,0,60].concat(mStr(id)))); };
+    ws.onmessage=ev=>{ const add=new Uint8Array(ev.data), nb=new Uint8Array(L.buf.length+add.length); nb.set(L.buf); nb.set(add,L.buf.length); L.buf=nb; parse(); };
+    ws.onclose=()=>{ L.ok=false; clearInterval(L.ping); updateConn(); retry(); };
+    ws.onerror=()=>{ try{ws.close();}catch(e){} };
+  }
+  function retry(){ setTimeout(connect,3000); }
+  function parse(){
+    for(;;){
+      const b=L.buf; if(b.length<2) return;
+      let mul=1,len=0,i=1,byte;
+      do{ if(i>=b.length) return; byte=b[i++]; len+=(byte&127)*mul; mul*=128; }while(byte&128);
+      if(b.length<i+len) return;
+      const type=b[0]>>4, body=b.subarray(i,i+len); L.buf=b.slice(i+len);
+      if(type===2){ if(body[1]===0){ L.ok=true; L.topics.forEach(t=>sub(t));
+          L.ping=setInterval(()=>{ try{L.ws.send(new Uint8Array([0xC0,0]));}catch(e){} },30000); updateConn(); netOnUp(); } }
+      else if(type===3){ const tl=(body[0]<<8)|body[1], topic=new TextDecoder().decode(body.subarray(2,2+tl));
+          let off=2+tl; if((b[0]>>1)&3) off+=2; onMsg(topic,new TextDecoder().decode(body.subarray(off))); }
+    }
+  }
+  function sub(t){ if(L.ok) L.ws.send(mPkt(0x82,[0,1].concat(mStr(t),[0]))); }
+  L.subscribe=t=>{ if(L.topics.indexOf(t)<0) L.topics.push(t); sub(t); };
+  L.publish=(t,txt,retain)=>{ if(!L.ok) return; try{ L.ws.send(mPkt(0x30|(retain?1:0),mStr(t).concat(u8(txt)))); }catch(e){} };
+  L.close=()=>{ L.dead=true; try{L.ws.close();}catch(e){} };
+  connect(); return L;
+}
+function netTopic(k){ return "surveyshowdown/v1/"+netCode+"/"+k; }
+function netOnMsg(topic,txt){
+  let d; try{ d=JSON.parse(txt); }catch(e){ return; }
+  if(topic===netTopic("hb")){ if(d&&d.id&&d.id!==myId){ netSeen[d.id]={role:String(d.role||""),t:Date.now()}; updateConn(); } return; }
+  if(topic===netTopic("state") && role==="tv" && d && d.st){
+    if(d.seq>netLastSeq){ netLastSeq=d.seq; applyState(d.st); }
+  }
+}
+function netStart(code){
+  netLinks.forEach(l=>l.close()); netLinks=[]; netSeen={}; netLastSeq=0; netCode=code;
+  const list = TEST_BROKER ? [{name:"test",url:decodeURIComponent(TEST_BROKER)}] : BROKERS;
+  netLinks=list.map(b=>MqttLink(b,netOnMsg));
+  netLinks.forEach(l=>{ l.subscribe(netTopic("hb")); if(role==="tv") l.subscribe(netTopic("state")); });
+  updateConn();
+}
+function netOnUp(){ netBeat(); if((role==="host"||role==="solo")&&S) send(); }
+function netBeat(){ if(!netCode) return; const m=JSON.stringify({id:myId,role:role||"none"}); netLinks.forEach(l=>l.publish(netTopic("hb"),m,false)); }
+setInterval(netBeat,3000);
+let netSeq=0; const hostEpoch=Math.random().toString(36).slice(2,8);
+function netSend(st){
+  if(!netCode) return;
+  netSeq=Math.max(netSeq+1,Date.now());
+  const msg=JSON.stringify({ep:hostEpoch,seq:netSeq,st:Object.assign({},st,{alts:undefined})});
+  netLinks.forEach(l=>l.publish(netTopic("state"),msg,true));
+}
+function initNet(){
+  if(window.claude&&window.claude.use) return false;   // inside Claude: use its live room instead
+  if(/(^|\.)(claude\.ai|claudeusercontent\.com)$/.test(location.hostname)) return false;
+  if(typeof WebSocket==="undefined"||typeof TextEncoder==="undefined") return false;
+  net=true;
+  $("pickHint").innerHTML="TV: open this page and choose <b>Big screen</b>. Phone: open the same page, choose <b>Host controller</b> and type the code from the TV.";
+  if(role) netRole();
+  updateConn();
+  return true;
+}
+function netRole(){
+  if(!net) return;
+  if(role==="tv"){
+    let c=lsGet("ss_tv_code",""); if(!/^[A-Z0-9]{4}$/.test(c)){ c=""; for(let i=0;i<4;i++) c+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; lsSet("ss_tv_code",c); }
+    $("tvCode").textContent=c; $("tvNetUrl").textContent=location.host+location.pathname.replace(/index\.html$/,"");
+    $("tvNet").classList.remove("hidden"); $("tvHow").classList.add("hidden"); netStart(c);
+  } else if(role==="host"){
+    $("codeBox").classList.remove("hidden");
+    const c=lsGet("ss_host_code",""); if(c){ $("codeIn").value=c; netStart(c); $("codeMsg").textContent="Using code "+c+". Type a new one if the TV shows a different code."; }
+  }
+}
+$("codeBtn").onclick=()=>{
+  const c=$("codeIn").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(c.length!==4){ $("codeMsg").textContent="The code has 4 letters/numbers — look at the TV."; return; }
+  lsSet("ss_host_code",c); netStart(c); $("codeMsg").textContent="Connecting to TV "+c+"…";
+};
+function others(r){
+  if(net){ const now=Date.now(); return Object.keys(netSeen).filter(k=>netSeen[k].role===r && now-netSeen[k].t<9000).length; }
+  if(local) return localPeers[r]||0;
+  return peers.filter(p=>!p.sameTab && p.presence && p.presence.role===r).length;
+}
+function setConn(dot,txt,on,msg){ if($(dot)){ $(dot).classList.toggle("on",on); $(txt).textContent=msg; } }
+function updateConn(){
+  if(net){
+    const up=netLinks.filter(l=>l.ok).length;
+    if(!netCode){ setConn("pickDot","pickConn",true,"Ready"); setConn("hDot","hConn",false,"Type the TV code below"); return; }
+    if(!up){ ["pick","tv","h"].forEach(p=>setConn(p+"Dot",p+"Conn",false,"Connecting to the internet relay…")); return; }
+  } else if(!room && !local){
+    const m="No live link here — use One screen mode";
+    ["pick","tv","h"].forEach(p=>setConn(p+"Dot",p+"Conn",false,m)); return;
+  }
+  if(local && !connected){ ["pick","tv","h"].forEach(p=>setConn(p+"Dot",p+"Conn",false,"Lost the laptop — is the server window still open?")); return; }
+  setConn("pickDot","pickConn",connected,connected?(local?"Local Wi-Fi link ready":"Live link ready"):"Connecting…");
+  const hosts=others("host")+others("solo"), tvs=others("tv");
+  setConn("tvDot","tvConn",hosts>0,hosts?"Host connected":"Waiting for host phone…");
+  setConn("hDot","hConn",tvs>0,tvs?`TV connected${tvs>1?` (${tvs})`:""}`:"TV not connected yet");
+}
+
+/* ================= role routing ================= */
+function setRole(r){
+  role=r; document.body.classList.toggle("solo",r==="solo");
+  $("pick").classList.toggle("hidden",!!r);
+  $("tv").classList.toggle("hidden",!(r==="tv"||r==="solo"));
+  $("host").classList.toggle("hidden",!(r==="host"||r==="solo"));
+  if(room) room.presence({role:r||"none"}).catch(()=>{});
+  if(r==="host"||r==="solo"){ hostInit(); }
+  if(net) netRole();
+  if(r==="solo") $("tvWait").querySelector("p").textContent="Set up the game on the right and press Start.";
+  updateConn(); updateSoundBtn();
+}
+$("pickTv").onclick=()=>{ audio(); location.hash="tv"; };
+$("pickHost").onclick=()=>{ location.hash="host"; };
+$("pickSolo").onclick=()=>{ audio(); location.hash="solo"; };
+function route(){ const h=location.hash.slice(1); setRole(["tv","host","solo"].includes(h)?h:null); }
+window.addEventListener("hashchange",route);
+
+/* ================= TV display ================= */
+let lastFx, boardKey="";
+function applyState(st){
+  if(!st||!st.q){ return; }
+  $("tvWait").classList.add("hidden"); $("tvGame").classList.remove("hidden");
+  const firstApply = lastFx===undefined;
+  const L=0,R=1;
+  $("tvLn").textContent=st.names[L]; $("tvRn").textContent=st.names[R];
+  $("tvLs").textContent=st.hide?"?":st.scores[L]; $("tvRs").textContent=st.hide?"?":st.scores[R];
+  [["tvLx",L],["tvRx",R]].forEach(([id,t])=>{ $(id).innerHTML=[0,1,2].map(i=>`<span class="${i<st.strikes[t]?"hit":""}">✕</span>`).join(""); });
+  const stealer = st.phase==="steal" ? 1-st.control : null;
+  [[ "tvL",L,"tvLtag"],["tvR",R,"tvRtag"]].forEach(([id,t,tag])=>{
+    const on = st.phase==="faceoff" ? st.buzz===t : (stealer!==null ? stealer===t : st.control===t);
+    $(id).classList.toggle("on",on);
+    $(tag).textContent = stealer===t ? "STEAL!" : (st.phase==="faceoff"&&st.buzz===t ? "BUZZED IN" : (st.phase==="play"&&st.control===t?"PLAYING":""));
+  });
+  $("tvBank").textContent=st.bank;
+  $("tvRound").textContent=`ROUND ${st.round+1} OF ${st.total}`+(st.m>1?` · ${st.m===2?"DOUBLE":"TRIPLE"} POINTS`:"");
+  $("tvQ").innerHTML=bi(st.q.ar,st.q.en);
+  $("tvMsg").textContent=st.msg||"";
+  const key=st.round+"|"+keyOf(st.q);
+  if(key!==boardKey){ buildBoard(st.q); boardKey=key; }
+  st.q.a.forEach((_,i)=>{ const t=$("tt"+i); if(!t) return;
+    t.classList.toggle("open",st.open[i]>0); t.classList.toggle("missed",st.open[i]===2); });
+  // final screen
+  const fin=$("final");
+  if(st.phase==="final"){
+    const [a,b]=st.scores;
+    $("fTitle").textContent = a===b ? "IT'S A TIE!" : `${st.names[a>b?0:1]} WIN!`;
+    $("fScores").innerHTML=`<div style="color:var(--a)">${esc(st.names[0])}<b>${a}</b></div><div style="color:var(--b)">${esc(st.names[1])}<b>${b}</b></div>`;
+    fin.classList.remove("hidden");
+  } else fin.classList.add("hidden");
+  // effects
+  if(st.fx && st.fx.id!==lastFx){
+    if(!firstApply){
+      const f=SFX[st.fx.t]; if(f) f();
+      if(st.fx.t==="x") showX(st.fx.n||1);
+    }
+    lastFx=st.fx.id;
+  } else if(firstApply) lastFx = st.fx? st.fx.id : null;
+}
+function buildBoard(q){
+  const b=$("tvBoard"); b.innerHTML="";
+  const n=q.a.length, slots=n<=4?4:n<=6?6:n<=8?8:10;
+  b.style.gridTemplateRows=`repeat(${Math.ceil(slots/2)},auto)`;
+  for(let i=0;i<slots;i++){
+    const t=document.createElement("div"); t.className="tile";
+    if(i<q.a.length){ t.id="tt"+i; const a=q.a[i];
+      t.innerHTML=`<div class="in"><div class="face front"><div class="num">${i+1}</div></div>
+        <div class="face back"><div class="ans">${bi(a.ar,a.en)}</div><span class="pts">${a.p}</span></div></div>`;
+    } else { t.classList.add("empty"); t.innerHTML=`<div class="in"><div class="face front"></div></div>`; }
+    b.appendChild(t);
+  }
+}
+function showX(n){
+  const x=$("bigx"); x.innerHTML=Array.from({length:Math.min(3,n)},()=>"<span>✕</span>").join(""); x.classList.remove("hidden");
+  clearTimeout(showX.t); showX.t=setTimeout(()=>x.classList.add("hidden"),1000);
+}
+$("soundBtn").onclick=()=>{ audio(); SFX.ding(); };
+$("fsBtn").onclick=()=>{ try{ const d=document.documentElement; (document.fullscreenElement?document.exitFullscreen():d.requestFullscreen()).catch(()=>{}); }catch(e){} };
+
+/* ================= HOST ================= */
+let S=null, H=[], QS=[], hostReady=false;
+let custom=lsGet("ss_custom_bi",[]); let disabled=new Set();
+function allQs(){ return [...custom.map(q=>({...q,custom:true})),...DEFAULT_QS]; }
+
+function hostInit(){
+  if(hostReady) return; hostReady=true;
+  renderQList();
+  const saved=lsGet("ss_live_game",null);
+  if(saved&&saved.S&&saved.S.phase!=="final") $("resumeBox").classList.remove("hidden");
+}
+function renderQList(){
+  const box=$("qlist"); box.innerHTML="";
+  allQs().forEach(q=>{
+    const k=keyOf(q), d=document.createElement("div"); d.className="qitem";
+    d.innerHTML=`<input type="checkbox" ${disabled.has(k)?"":"checked"}><div class="grow">${bi(q.ar,q.en)}</div>`;
+    d.querySelector("input").onchange=e=>{ e.target.checked?disabled.delete(k):disabled.add(k); qcount(); };
+    if(q.custom){ const x=document.createElement("button"); x.className="del"; x.textContent="✕";
+      x.onclick=()=>{ custom=custom.filter(c=>keyOf(c)!==k); lsSet("ss_custom_bi",custom); renderQList(); }; d.appendChild(x); }
+    box.appendChild(d);
+  });
+  qcount();
+}
+function qcount(){ $("qcount").textContent=allQs().filter(q=>!disabled.has(keyOf(q))).length+" selected"; }
+$("addQ").onclick=()=>{
+  const qar=$("newQar").value.trim(), qen=$("newQen").value.trim(), msg=$("addMsg"), a=[];
+  for(const l of $("newA").value.split("\n").map(s=>s.trim()).filter(Boolean)){
+    const p=l.split("|").map(s=>s.trim()); let ar,en,pt;
+    if(p.length>=3)[ar,en,pt]=p; else if(p.length===2){[ar,pt]=p;en="";}
+    const n=parseInt(toLatin(pt||""),10);
+    if((!ar&&!en)||isNaN(n)){ msg.textContent=`Couldn't read: "${l}"`; return; }
+    a.push([splitAlts(ar).join(","),splitAlts(en).join(","),n]);
+  }
+  if(!qar&&!qen){ msg.textContent="Type the question first."; return; }
+  if(a.length<2||a.length>10){ msg.textContent="Use 2 to 10 answers."; return; }
+  a.sort((x,y)=>y[2]-x[2]); custom.unshift({ar:qar,en:qen,a}); lsSet("ss_custom_bi",custom); renderQList();
+  ["newQar","newQen","newA"].forEach(id=>$(id).value=""); msg.textContent="Added ✓";
+};
+
+function send(){
+  if(!S) return;
+  if(room) room.emit("state",S).catch(()=>{});
+  if(net) netSend(S);
+  if(local) fetch("/api/state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(S)}).catch(()=>{});
+  if(role==="solo") applyState(S);
+  lsSet("ss_live_game",{S,QS});
+}
+setInterval(()=>{ if((role==="host"||role==="solo")&&S) send(); },3000);
+
+function fx(t,extra){ S.fx={id:Date.now()+"-"+Math.random().toString(36).slice(2,6),t,...(extra||{})}; }
+function push(){ H.push(JSON.stringify(S)); if(H.length>80) H.shift(); }
+function commit(){ send(); renderHost(); }
+function nm(t){ return S.names[t]; }
+function mult(round,total){ if(!S.multOn) return 1; const left=total-round; if(total>=3&&left===1) return 3; if(total>=4&&left===2) return 2; return 1; }
+
+$("startBtn").onclick=()=>{
+  let pool=allQs().filter(q=>!disabled.has(keyOf(q)));
+  if(!pool.length){ $("qcount").textContent="Tick at least one question!"; return; }
+  if($("order").value==="shuffle") pool=pool.sort(()=>Math.random()-.5);
+  const n=Math.min(parseInt($("roundCount").value,10),pool.length);
+  QS=pool; // keep the rest as spares for "skip"
+  S={names:[$("nameL").value.trim()||"Left Team",$("nameR").value.trim()||"Right Team"],scores:[0,0],
+     hide:$("hideSel").value==="hide",multOn:$("multSel").value==="on",total:n,round:0,next:n};
+  H=[]; loadRound(0); fx("flip"); commit(); audio();
+};
+$("resumeBtn").onclick=()=>{ const s=lsGet("ss_live_game",null); if(!s) return; S=s.S; QS=s.QS||[]; H=[]; S.fx=null; fx("none"); commit(); };
+$("discardBtn").onclick=()=>{ lsDel("ss_live_game"); $("resumeBox").classList.add("hidden"); };
+
+function loadRound(idx){
+  const q=QS[idx];
+  Object.assign(S,{qi:idx,q:{ar:q.ar,en:q.en,a:q.a.map(([a,e,p])=>({ar:first(a),en:first(e),p}))},
+    alts:q.a.map(([a,e])=>[...splitAlts(a).slice(1),...splitAlts(e).slice(1)].join("، ")),
+    open:q.a.map(()=>0),bank:0,strikes:[0,0],control:null,buzz:null,phase:"faceoff",m:mult(S.round,S.total),
+    msg:"FACE-OFF! One player from each team — first to buzz answers."});
+}
+
+function reveal(i){
+  if(!S||S.open[i]) return; push();
+  const a=S.q.a[i];
+  if(S.phase==="done"||S.phase==="final"){ S.open[i]=2; fx("flip"); S.msg=""; return commit(); }
+  S.open[i]=1; S.bank+=a.p*S.m; fx("ding");
+  S.msg=`Survey says… "${a.en||a.ar}" — ${a.p}!`;
+  if(S.phase==="steal"){ const st=1-S.control; award(st); S.msg=`STOLEN! ${nm(st)} take ${S.lastWin} points!`; fx("win"); }
+  else if(S.phase==="play" && S.open.every(v=>v)){ const c=S.control; award(c); S.msg=`Board cleared! ${nm(c)} win ${S.lastWin} points!`; fx("win"); }
+  commit();
+}
+function award(t){ S.lastWin=S.bank; S.scores[t]+=S.bank; S.bank=0; S.phase="done"; S.winner=t; }
+function buzz(t){ push(); S.buzz=t; S.msg=`${nm(t)} buzzed in first!`; fx("buzz"); commit(); }
+function faceoffWrong(){ push(); S.msg="Not on the board!"; fx("x",{n:1}); commit(); }
+function setPlay(t){ push(); S.control=t; S.phase="play"; S.msg=`${nm(t)} are playing the board!`; fx("buzz"); commit(); }
+function strike(){
+  if(S.phase!=="play") return; push();
+  const c=S.control; S.strikes[c]=Math.min(3,S.strikes[c]+1); fx("x",{n:S.strikes[c]});
+  if(S.strikes[c]>=3){ S.phase="steal"; S.msg=`3 STRIKES! ${nm(1-c)} — one answer to STEAL ${S.bank} points!`; }
+  else S.msg=`Strike ${S.strikes[c]}!`;
+  commit();
+}
+function stealFail(){
+  push(); const c=S.control, st=1-c; S.strikes[st]=Math.max(1,S.strikes[st]); award(c);
+  S.msg=`Steal failed! ${nm(c)} keep ${S.lastWin} points.`; fx("x",{n:1}); commit();
+}
+function giveBank(t){ push(); award(t); S.msg=`${nm(t)} win ${S.lastWin} points!`; fx("win"); commit(); }
+function nextRound(){
+  push(); S.round++;
+  if(S.round>=S.total){ S.phase="final"; S.hide=false; S.msg=""; fx("final"); return commit(); }
+  loadRound(S.round); fx("flip"); commit();
+}
+function skipQ(){
+  if(S.next>=QS.length){ S.msg="No spare questions left."; return renderHost(); }
+  push(); loadRound(S.next++); fx("flip"); commit();
+}
+function finish(){ push(); S.phase="final"; S.hide=false; S.msg=""; fx("final"); commit(); }
+
+/* ----- host rendering ----- */
+function renderHost(){
+  const inGame=!!S;
+  $("hSetup").classList.toggle("hidden",inGame); $("hRound").classList.toggle("hidden",!inGame);
+  $("hFoot").classList.toggle("hidden",!inGame);
+  if(!inGame) return;
+  $("hLn").textContent=nm(0); $("hRn").textContent=nm(1);
+  $("hLs").textContent=S.scores[0]; $("hRs").textContent=S.scores[1];
+  $("hLx").textContent="✕".repeat(S.strikes[0]); $("hRx").textContent="✕".repeat(S.strikes[1]);
+  const stealer=S.phase==="steal"?1-S.control:null;
+  $("hL").classList.toggle("on",S.phase==="faceoff"?S.buzz===0:(stealer!==null?stealer===0:S.control===0));
+  $("hR").classList.toggle("on",S.phase==="faceoff"?S.buzz===1:(stealer!==null?stealer===1:S.control===1));
+  $("hBank").textContent=S.bank;
+  $("hRound2").textContent=`Round ${S.round+1} of ${S.total}`+(S.m>1?` · ×${S.m} points`:"");
+  $("hPhase").textContent={faceoff:"FACE-OFF",play:"PLAYING",steal:"STEAL",done:"ROUND OVER",final:"GAME OVER"}[S.phase];
+  $("hQ").innerHTML=bi(S.q.ar,S.q.en);
+  $("hMsg").textContent=S.msg||"";
+  $("hideBtn").textContent=S.hide?"Show scores on TV":"Hide scores on TV";
+  $("undoBtn").disabled=!H.length;
+  $("hAnsHint").textContent = S.phase==="done" ? "Tap any hidden answer to show it on the TV (no points)." :
+     S.phase==="final" ? "" : "Tap an answer when a player says it — it flips on the TV.";
+  const box=$("hAnswers"); box.innerHTML="";
+  S.q.a.forEach((a,i)=>{
+    const b=document.createElement("button"); const st=S.open[i];
+    b.className="abtn"+(st===1?" done":st===2?" miss":"");
+    b.innerHTML=`<span class="n">${st?"✓":i+1}</span><div class="tx">${bi(a.ar,a.en)}${S.alts&&S.alts[i]?`<small class="hint">also: ${esc(S.alts[i])}</small>`:""}</div><span class="p">${a.p}</span>`;
+    b.disabled=!!st||S.phase==="final"; b.onclick=()=>reveal(i); box.appendChild(b);
+  });
+  const A=$("hActs"); A.innerHTML="";
+  const btn=(txt,cls,fn,dis)=>{ const b=document.createElement("button"); b.className=cls+" big"; b.innerHTML=txt; b.onclick=fn; b.disabled=!!dis; return b; };
+  const two=(x,y)=>{ const d=document.createElement("div"); d.className="two"; d.append(x,y); return d; };
+  if(S.phase==="faceoff"){
+    A.append(lbl("1 · Who buzzed first?"));
+    A.append(two(btn("◀ "+esc(nm(0)),"ca",()=>buzz(0)),btn(esc(nm(1))+" ▶","cb",()=>buzz(1))));
+    A.append(btn("✕ Wrong answer (no strike)","red",faceoffWrong));
+    A.append(lbl("2 · After they choose PLAY or PASS — who plays the board?"));
+    A.append(two(btn("◀ "+esc(nm(0))+" play","ca",()=>setPlay(0)),btn(esc(nm(1))+" play ▶","cb",()=>setPlay(1))));
+  } else if(S.phase==="play"){
+    A.append(btn(`✕ STRIKE — ${esc(nm(S.control))} (${S.strikes[S.control]}/3)`,"red",strike));
+  } else if(S.phase==="steal"){
+    A.append(lbl(`${esc(nm(1-S.control))} get ONE answer. If it's on the board, tap it above. If not:`));
+    A.append(btn("✕ Steal failed","red",stealFail));
+  } else if(S.phase==="done"){
+    A.append(btn(S.round+1>=S.total?"🏆 Finish game & show winner":"Next round ▶","gold",nextRound));
+  } else if(S.phase==="final"){
+    const [a,b]=S.scores;
+    A.append(lbl(a===b?"It's a tie!":`${esc(nm(a>b?0:1))} win, ${Math.max(a,b)} to ${Math.min(a,b)}.`));
+    A.append(btn("New game","gold",()=>{ S=null; H=[]; lsDel("ss_live_game"); $("resumeBox").classList.add("hidden"); renderHost(); }));
+  }
+}
+function lbl(t){ const d=document.createElement("div"); d.className="hint"; d.style.fontWeight="700"; d.innerHTML=t; return d; }
+
+$("undoBtn").onclick=()=>{ if(!H.length) return; S=JSON.parse(H.pop()); fx("none"); commit(); };
+$("hideBtn").onclick=()=>{ push(); S.hide=!S.hide; fx("none"); commit(); };
+$("moreBtn").onclick=()=>{ $("mGiveL").textContent=`Give bank → ${nm(0)}`; $("mGiveR").textContent=`Give bank → ${nm(1)}`;
+  $("mPlusL").textContent=`+10 ${nm(0)}`; $("mPlusR").textContent=`+10 ${nm(1)}`; $("menu").classList.remove("hidden"); };
+const closeMenu=()=>$("menu").classList.add("hidden");
+$("mClose").onclick=closeMenu; $("menu").onclick=e=>{ if(e.target.id==="menu") closeMenu(); };
+$("mGiveL").onclick=()=>{ closeMenu(); giveBank(0); };
+$("mGiveR").onclick=()=>{ closeMenu(); giveBank(1); };
+$("mPlusL").onclick=()=>{ closeMenu(); push(); S.scores[0]+=10; fx("none"); commit(); };
+$("mPlusR").onclick=()=>{ closeMenu(); push(); S.scores[1]+=10; fx("none"); commit(); };
+$("mClearX").onclick=()=>{ closeMenu(); push(); S.strikes=[0,0]; if(S.phase==="steal") S.phase="play"; fx("none"); commit(); };
+$("mSkip").onclick=()=>{ closeMenu(); skipQ(); };
+$("mFinish").onclick=()=>{ closeMenu(); finish(); };
+$("mQuit").onclick=()=>{ closeMenu(); S=null; H=[]; lsDel("ss_live_game"); renderHost(); };
+
+/* ================= boot ================= */
+route();
+(async()=>{ if(!(await initLocal())){ if(!initNet()) initRoom(); } })();
+setInterval(updateConn,3000);
+updateConn();
+</script>
+</body>
+</html>
